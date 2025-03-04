@@ -1,0 +1,15 @@
+FROM tensorflow/serving:2.12.1
+
+# Copy the SavedModel directory correctly
+COPY ./fashion_recommender_model /models/fashion_recommender
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Expose ports
+EXPOSE 8500
+EXPOSE 8501
+
+# Fix: Use ENTRYPOINT for tensorflow_model_server and CMD for arguments
+ENTRYPOINT ["tensorflow_model_server"]
+CMD ["--port=8500", "--rest_api_port=8501", "--model_name=fashion_recommender", "--model_base_path=/models/fashion_recommender"]
