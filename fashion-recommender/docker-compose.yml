@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  tf-serving:
+    build:
+      context: .
+      dockerfile: Dockerfile.tfserving
+    ports:
+      - "8501:8501"  # REST API
+      - "8500:8500"  # gRPC
+    volumes:
+      - ./fashion_recommender_model:/models/fashion_recommender:ro  # Read-only
+    environment:
+      - MODEL_NAME=fashion_recommender
+      - MODEL_BASE_PATH=/models/fashion_recommender
+    restart: always
+    networks:
+      - fashion-recommender-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/v1/models/fashion_recommender"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s  # Allow time for model loading
+      retries: 5  # Increase retries
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      - TF_SERVING_URL=http://tf-serving:8501
+      - MONGO_URI=mongodb+srv://Moksh:mongoDep2%40@cluster0.30fs0.mongodb.net
+    depends_on:
+      tf-serving:
+        condition: service_healthy  # Wait for TensorFlow Serving to be ready
+    restart: always
+    networks:
+      - fashion-recommender-network
+
+networks:
+  fashion-recommender-network:
+    driver: bridge
