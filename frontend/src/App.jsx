@@ -15,6 +15,7 @@ import PlaceOrder from './Pages/PlaceOrder'
 import Footer from './Components/Footer'
 import SearchBar from './Components/SearchBar'
 import Verify from './Pages/Verify';
+import FashionRecommender from './Pages/FashionRecommender';
 const App = () => {
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
@@ -25,6 +26,7 @@ const App = () => {
         <Route path = '/' element = {<Home/>} />
         <Route path = '/Home' element = {<Home/>} />
         <Route path = '/Collection' element = {<Collection/>} />
+        <Route path = '/fashion-recommender' element = {<FashionRecommender/>} />
         <Route path = '/AboutUs' element = {<AboutUs/>} />
         <Route path = '/ContactUs' element = {<ContactUs/>} />
         <Route path = '/Product/:productId' element = {<Product/>} />

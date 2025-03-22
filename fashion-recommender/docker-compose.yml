@@ -13,6 +13,8 @@ services:
     environment:
       - MODEL_NAME=fashion_recommender
       - MODEL_BASE_PATH=/models/fashion_recommender
+      - TF_CPP_MIN_LOG_LEVEL=2  # Reduce TensorFlow logging
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
     restart: always
     networks:
       - fashion-recommender-network
@@ -20,8 +22,14 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8501/v1/models/fashion_recommender"]
       interval: 30s
       timeout: 10s
-      start_period: 30s  # Allow time for model loading
-      retries: 5  # Increase retries
+      start_period: 30s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G  # Limit memory usage
+        reservations:
+          memory: 2G  # Reserve minimum memory
 
   api:
     build:
@@ -32,13 +40,34 @@ services:
     environment:
       - TF_SERVING_URL=http://tf-serving:8501
       - MONGO_URI=mongodb+srv://Moksh:mongoDep2%40@cluster0.30fs0.mongodb.net
+      - MODEL_NAME=fashion_recommender
+      - NUM_RECOMMENDATIONS=5
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=2
     depends_on:
       tf-serving:
-        condition: service_healthy  # Wait for TensorFlow Serving to be ready
+        condition: service_healthy
     restart: always
     networks:
       - fashion-recommender-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
 networks:
   fashion-recommender-network:
     driver: bridge
+
+volumes:
+  model_volume:
+    driver: local
