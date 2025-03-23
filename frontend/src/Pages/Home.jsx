@@ -3,7 +3,6 @@ import Hero from '../Components/Hero'
 import LatestCollection from '../Components/LatestCollection'
 import Bestsellers from '../Components/Bestsellers'
 import Ourpolicy from '../Components/Ourpolicy'
-import Registration from '../Components/Registeration'
 
 
 const Home = () => {
@@ -13,7 +12,6 @@ const Home = () => {
       <LatestCollection/>
       <Bestsellers/>
       <Ourpolicy/>
-      <Registration/>
     </div>
   )
 }

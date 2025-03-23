@@ -1,37 +1,47 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const SubscriptionForm = () => {
-  const [email, setEmail] = useState('');
+const Registration = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'customer'
+  });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Subscribing user:', { email });
+    try {
+      const response = await axios.post('http://localhost:5000/api/user/register', formData);
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', response.data.role);
+        if (response.data.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Registration failed');
+    }
   };
 
   return (
-    <div className="bg-white rounded-lg p-8 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-center">Subscribe now & get 20% off</h2>
-      <p className="text-gray-600 mb-6 text-center">
-      Sign up for our newsletter to receive exclusive offers and updates."
-      </p>
-      <form onSubmit={handleSubmit} className="flex">
-        <input
-          type="email"
-          value={email}
-          placeholder='Enter your email:'
-          onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 bg-gray-100 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          required
-        />
-        <button
-          type="submit"
-          className="bg-indigo-500 text-white px-4 py-2 rounded-r-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          SUBSCRIBE
-        </button>
-      </form>
+    <div>
+      <h1></h1>
     </div>
   );
 };
 
-export default SubscriptionForm;
+export default Registration;

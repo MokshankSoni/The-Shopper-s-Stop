@@ -15,7 +15,8 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
   const [products,setProducts] = useState([]);
   const [token,setToken] = useState('')
-   const navigate = useNavigate()
+  const [role, setRole] = useState('')
+  const navigate = useNavigate()
 
   // Function to add items to cart
   const addToCart = async(itemId, size) => {
@@ -40,54 +41,28 @@ const ShopContextProvider = (props) => {
     }
     setCartItems(cartData);
 
-  if (token) {
-    
-    try {
-      const response = await axios.post(
-        backendUrl + "/api/cart/add",
-        { itemId, size }, 
-        { headers: { token } }
-      );
+    if (token) {
+      try {
+        const response = await axios.post(
+          backendUrl + "/api/cart/add",
+          { itemId, size }, 
+          { headers: { token } }
+        );
 
-      console.log("Cart Response:", response.data);
-      if (response.data.success) {
-        toast.success(response.data.message);
-      } else {
-        toast.error(response.data.message);
+        if (response.data.success) {
+          toast.success(response.data.message);
+        } else {
+          toast.error(response.data.message);
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        toast.error(error.response?.data?.message || "Failed to add to cart.");
       }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error(error.response?.data?.message || "Failed to add to cart.");
     }
-  }
-
-    // if(token){
-    //   try{
-    //     await axios.post(backendUrl + '/api/cart/add',{itemId,size},{headers:{token}})
-    //   }
-    //   catch(error){
-    //     console.log(error);
-    //     toast.error(error.message)
-        
-    //   }
-    // }
-    // setCartItems((prevCart) => {
-    //   let updatedCart = { ...prevCart };
-
-    //   if (updatedCart[itemId]) {
-    //     updatedCart[itemId] = { ...updatedCart[itemId] }; // Ensure reactivity
-    //     updatedCart[itemId][size] = (updatedCart[itemId][size] || 0) + 1;
-    //   } else {
-    //     updatedCart[itemId] = { [size]: 1 };
-    //   }
-
-    //   return updatedCart;
-    // });
   };
 
   // Function to get total count of items in cart
   const getCartCount = () => {
-    
     let totalCount = 0;
     for(const items in cartItems){
       for(const item in cartItems[items]){
@@ -101,32 +76,26 @@ const ShopContextProvider = (props) => {
       }
     }
     return totalCount;
-    
-    // return Object.values(cartItems).reduce(
-    //   (total, item) =>
-    //     total + Object.values(item).reduce((sum, qty) => sum + qty, 0),
-    //   0
-    // );
   };
 
   // Function to update quantity in cart
   const updateQuantity = async (itemId, size, quantity) => {
-    
     let cartData = structuredClone(cartItems);
-
     cartData[itemId][size] = quantity;
-    
     setCartItems(cartData);
     
     if(token){
       try {
-        await axios.post(backendUrl + '/api/cart/update',{itemId,size,quantity},{headers:{token}})
+        await axios.post(
+          backendUrl + '/api/cart/update',
+          {itemId, size, quantity},
+          { headers: { token } }
+        )
       } catch (error) {
-        console.error("Error adding to cart:", error);
-        toast.error(error.response?.data?.message || "Failed to add to cart.");
+        console.error("Error updating cart:", error);
+        toast.error(error.response?.data?.message || "Failed to update cart.");
       }
     }
-
   };
 
   const getCartAmount = () => {
@@ -148,8 +117,8 @@ const ShopContextProvider = (props) => {
 
   const getProductsData = async () => {
     try {
-      
-      const response = await axios.get(backendUrl + '/api/product/list')
+      const headers = token ? { token } : {};
+      const response = await axios.get(backendUrl + '/api/product/list', { headers });
       if(response.data.success){
         setProducts(response.data.products)
       } else{
@@ -157,20 +126,29 @@ const ShopContextProvider = (props) => {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Failed to fetch products");
     }
   }
 
-  const getUserCart = async (token) =>{
+  const getUserCart = async (token) => {
+    if (!token) return; // Don't attempt to fetch cart if no token
+    
     try {
-      const response = await axios.post(backendUrl + '/api/cart/get',{},{headers:{token}})
+      const response = await axios.post(
+        backendUrl + '/api/cart/get',
+        {},
+        { headers: { token } }
+      )
 
       if(response.data.success){
         setCartItems(response.data.cartData)
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      // Only show error if it's not a 401 (Unauthorized) error
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || "Failed to fetch cart");
+      }
     }
   }
 
@@ -179,9 +157,11 @@ const ShopContextProvider = (props) => {
   },[])
 
   useEffect(()=>{
-    if(!token && localStorage.getItem('token')){
-      setToken(localStorage.getItem('token'))
-      getUserCart(localStorage.getItem('token'))
+    const storedToken = localStorage.getItem('token')
+    if(!token && storedToken){
+      setToken(storedToken)
+      setRole(localStorage.getItem('role'))
+      getUserCart(storedToken)
     }
   },[])
 
@@ -200,8 +180,11 @@ const ShopContextProvider = (props) => {
     getCartAmount,
     navigate,
     backendUrl,
-    setToken,token,
-    setCartItems
+    setToken,
+    token,
+    setCartItems,
+    role,
+    setRole
   };
 
   return (

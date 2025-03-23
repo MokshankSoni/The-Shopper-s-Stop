@@ -8,6 +8,8 @@ import productRouter from './routes/productRoute.js'
 import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import fashionRoutes from './routes/fashionRoutes.js'
+import { verifyToken } from './middleware/authMiddleware.js'
+import { listProducts } from './controllers/productController.js'
 
 //App config
 const app = express()
@@ -16,17 +18,19 @@ const port = process.env.PORT || 4000
 connectDB()
 connectCloudinary()
 
-
 //middlewares
 app.use(express.json())
 app.use(cors())
 
-// api endpoints
-app.use('/api/user',userRouter)
-app.use('/api/product',productRouter);
-app.use('/api/cart',cartRouter)
-app.use('/api/order',orderRouter)
-app.use("/api/fashion", fashionRoutes);
+// Public routes
+app.use('/api/user', userRouter)
+app.get('/api/product/list', listProducts)
+
+// Protected routes - require authentication
+app.use('/api/product', verifyToken, productRouter);
+app.use('/api/cart', verifyToken, cartRouter)
+app.use('/api/order', verifyToken, orderRouter)
+app.use("/api/fashion", verifyToken, fashionRoutes);
 
 app.get('/',(req,res)=>{
     res.send('API working')
