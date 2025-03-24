@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ProductItem from "../Components/Productitem";
 
 const FashionRecommender = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -21,19 +22,26 @@ const FashionRecommender = () => {
 
   const handleSubmit = async () => {
     if (!selectedFile) {
-      setError("Please upload an image first!");
+      setError("Please select an image first.");
       return;
     }
 
-    setLoading(true);
     const formData = new FormData();
     formData.append("image", selectedFile);
 
     try {
       console.log("Sending request to backend...");
       
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("No token provided");
+      }
+
       const response = await fetch(`${backendUrl}/api/fashion/uploadImageAndPredict`, {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 
@@ -57,8 +65,6 @@ const FashionRecommender = () => {
       console.error("Error fetching recommendations:", error);
       setError(error.message || "An error occurred while fetching recommendations");
       setRecommendedItems([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -121,25 +127,13 @@ const FashionRecommender = () => {
           <h2 className="text-2xl font-semibold mb-4 text-center">Similar Fashion Items</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {recommendedItems.map((item, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="h-48 overflow-hidden">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900 mb-1 truncate" title={item.name}>
-                    {item.name}
-                  </h3>
-                  {item.brand && (
-                    <p className="text-sm text-gray-500 mb-2">{item.brand}</p>
-                  )}
-                  <p className="text-lg font-semibold">${parseFloat(item.price).toFixed(2)}</p>
-                  <p className="text-xs text-gray-500 mt-1">Similarity: {item.score}</p>
-                </div>
-              </div>
+              <ProductItem
+                key={index}
+                id={item._id}
+                name={item.name}
+                price={item.price}
+                image={[item.imageUrl]}
+              />
             ))}
           </div>
         </div>
@@ -149,7 +143,6 @@ const FashionRecommender = () => {
 };
 
 export default FashionRecommender;
-
 
 
 
@@ -369,3 +362,4 @@ export default FashionRecommender;
 // // };
 
 // // export default FashionRecommender;
+

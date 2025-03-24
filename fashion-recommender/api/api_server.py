@@ -172,6 +172,9 @@ def find_similar_products(embedding, num_recommendations=5):
         embedding_list = embedding.tolist() if hasattr(embedding, 'tolist') else embedding
         logger.info(f"Embedding list length: {len(embedding_list)}")
 
+        # Add a minimum confidence threshold
+        MIN_CONFIDENCE = 0.5  # Increased threshold for stricter matching
+
         pipeline = [
             {
                 "$search": {
@@ -179,7 +182,7 @@ def find_similar_products(embedding, num_recommendations=5):
                     "knnBeta": {
                         "vector": embedding_list,
                         "path": "embedding",
-                        "k": num_recommendations
+                        "k": num_recommendations * 2  # Get more results to filter
                     }
                 }
             },
@@ -192,6 +195,14 @@ def find_similar_products(embedding, num_recommendations=5):
                     "image": 1,
                     "score": {"$meta": "searchScore"}
                 }
+            },
+            {
+                "$match": {
+                    "score": {"$gte": MIN_CONFIDENCE}  # Filter by confidence threshold
+                }
+            },
+            {
+                "$limit": num_recommendations  # Limit to requested number of recommendations
             }
         ]
 

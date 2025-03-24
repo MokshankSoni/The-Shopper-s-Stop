@@ -46,7 +46,7 @@ const ShopContextProvider = (props) => {
         const response = await axios.post(
           backendUrl + "/api/cart/add",
           { itemId, size }, 
-          { headers: { token } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (response.data.success) {
@@ -89,7 +89,7 @@ const ShopContextProvider = (props) => {
         await axios.post(
           backendUrl + '/api/cart/update',
           {itemId, size, quantity},
-          { headers: { token } }
+          { headers: { Authorization: `Bearer ${token}` } }
         )
       } catch (error) {
         console.error("Error updating cart:", error);
@@ -117,7 +117,7 @@ const ShopContextProvider = (props) => {
 
   const getProductsData = async () => {
     try {
-      const headers = token ? { token } : {};
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await axios.get(backendUrl + '/api/product/list', { headers });
       if(response.data.success){
         setProducts(response.data.products)
@@ -137,7 +137,7 @@ const ShopContextProvider = (props) => {
       const response = await axios.post(
         backendUrl + '/api/cart/get',
         {},
-        { headers: { token } }
+        { headers: { Authorization: `Bearer ${token}` } }
       )
 
       if(response.data.success){
@@ -158,7 +158,7 @@ const ShopContextProvider = (props) => {
 
   useEffect(()=>{
     const storedToken = localStorage.getItem('token')
-    if(!token && storedToken){
+    if(storedToken){
       setToken(storedToken)
       setRole(localStorage.getItem('role'))
       getUserCart(storedToken)
